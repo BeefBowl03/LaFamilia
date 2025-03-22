@@ -15,6 +15,7 @@ class DataService {
 
   final Uuid _uuid = Uuid();
   late SharedPreferences _prefs;
+  List<ShoppingItem> _shoppingItems = [];
 
   // Initialization method
   Future<void> init() async {
@@ -140,52 +141,43 @@ class DataService {
   }
 
   // Shopping List Methods
-  Future<String> addShoppingItem(ShoppingItem item, String familyId) async {
-    final itemId = item.id.isNotEmpty ? item.id : _uuid.v4();
-    final newItem = ShoppingItem(
-      id: itemId,
-      name: item.name,
-      quantity: item.quantity,
-      isCompleted: item.isCompleted,
-      addedBy: item.addedBy,
-    );
-
-    // Get all shopping items for the family
-    final allItems = await getShoppingList(familyId);
-    allItems.add(newItem);
-
-    // Save all items
-    await saveShoppingList(familyId, allItems);
+  Future<String> addShoppingItem(ShoppingItem item) async {
+    final itemId = _uuid.v4();
+    final newItem = item.copyWith(id: itemId);
+    _shoppingItems.add(newItem);
+    
+    // Save to SharedPreferences
+    await _saveShoppingItems();
     return itemId;
   }
 
-  Future<void> saveShoppingList(String familyId, List<ShoppingItem> items) async {
-    final itemsJson = items.map((item) => item.toJson()).toList();
-    await _prefs.setString(_shoppingPrefix + familyId, jsonEncode(itemsJson));
-  }
-
-  Future<List<ShoppingItem>> getShoppingList(String familyId) async {
-    final itemsJson = _prefs.getString(_shoppingPrefix + familyId);
-    if (itemsJson == null) return [];
-
-    final List<dynamic> itemList = jsonDecode(itemsJson);
-    return itemList.map((json) => ShoppingItem.fromJson(json)).toList();
-  }
-
-  Future<void> updateShoppingItem(ShoppingItem item, String familyId) async {
-    final items = await getShoppingList(familyId);
-    final index = items.indexWhere((i) => i.id == item.id);
+  Future<void> updateShoppingItem(ShoppingItem item) async {
+    if (item.id == null) return;
     
-    if (index >= 0) {
-      items[index] = item;
-      await saveShoppingList(familyId, items);
+    final index = _shoppingItems.indexWhere((i) => i.id == item.id);
+    if (index != -1) {
+      _shoppingItems[index] = item;
+      await _saveShoppingItems();
     }
   }
 
-  Future<void> deleteShoppingItem(String itemId, String familyId) async {
-    final items = await getShoppingList(familyId);
-    items.removeWhere((i) => i.id == itemId);
-    await saveShoppingList(familyId, items);
+  Future<void> deleteShoppingItem(String itemId) async {
+    _shoppingItems.removeWhere((item) => item.id == itemId);
+    await _saveShoppingItems();
+  }
+
+  Future<List<ShoppingItem>> getShoppingItems() async {
+    final itemsJson = _prefs.getString(_shoppingPrefix);
+    if (itemsJson != null) {
+      final List<dynamic> itemsList = jsonDecode(itemsJson);
+      _shoppingItems = itemsList.map((json) => ShoppingItem.fromJson(json)).toList();
+    }
+    return _shoppingItems;
+  }
+
+  Future<void> _saveShoppingItems() async {
+    final itemsJson = jsonEncode(_shoppingItems.map((item) => item.toJson()).toList());
+    await _prefs.setString(_shoppingPrefix, itemsJson);
   }
 
   // Notification Methods

@@ -16,7 +16,10 @@ migrate_working_dir/
 *.iws
 .idea/
 
-# VS Code related
+# Visual Studio Code related
+.classpath
+.project
+.settings/
 .vscode/
 
 # Flutter/Dart/Pub related
@@ -31,19 +34,14 @@ migrate_working_dir/
 /build/
 .fvm/
 
-# Web related
-lib/generated_plugin_registrant.dart
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# Android related
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
 
 # iOS/XCode related
 **/ios/**/*.mode1v3
@@ -62,12 +60,9 @@ app.*.map.json
 **/ios/**/profile
 **/ios/**/xcuserdata
 **/ios/.generated/
-**/ios/Flutter/.last_build_id
 **/ios/Flutter/App.framework
 **/ios/Flutter/Flutter.framework
-**/ios/Flutter/Flutter.podspec
 **/ios/Flutter/Generated.xcconfig
-**/ios/Flutter/ephemeral
 **/ios/Flutter/app.flx
 **/ios/Flutter/app.zip
 **/ios/Flutter/flutter_assets/
@@ -75,13 +70,21 @@ app.*.map.json
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
 
-# macOS
-**/macos/Flutter/GeneratedPluginRegistrant.swift
-**/macos/Flutter/ephemeral
+# Web related
+lib/generated_plugin_registrant.dart
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
 
 # Coverage
 coverage/
-*.lcov
+
+# Temporary files
+*.tmp
+*.temp
 
 # Exceptions to above rules.
 !**/ios/**/default.mode1v3

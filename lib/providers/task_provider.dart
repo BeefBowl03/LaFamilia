@@ -4,20 +4,28 @@ import 'package:uuid/uuid.dart';
 import '../models/task_model.dart';
 import '../models/user_model.dart';
 import '../services/database_service.dart';
+import '../services/data_service.dart';
 
-class TaskProvider with ChangeNotifier {
-  final DatabaseService _db;
+class TaskProvider extends ChangeNotifier {
+  late DataService _dataService;
+  late DatabaseService _db;
   final Uuid _uuid = Uuid();
 
   List<Task> _tasks = [];
   TaskCategory? _selectedCategory;
   bool _isLoading = false;
 
-  TaskProvider(this._db);
+  TaskProvider() {
+    _db = DatabaseService();  // Initialize with default instance
+  }
 
   List<Task> get tasks => _tasks;
   TaskCategory? get selectedCategory => _selectedCategory;
   bool get isLoading => _isLoading;
+
+  void setDataService(DataService dataService) {
+    _dataService = dataService;
+  }
 
   void setSelectedCategory(TaskCategory? category) {
     _selectedCategory = category;

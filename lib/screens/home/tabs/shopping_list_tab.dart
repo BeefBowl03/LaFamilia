@@ -38,7 +38,7 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
     ));
     
     _animationController.forward();
-    _loadShoppingList();
+    loadShoppingList();
   }
 
   @override
@@ -49,7 +49,7 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
     super.dispose();
   }
 
-  Future<void> _loadShoppingList() async {
+  Future<void> loadShoppingList() async {
     setState(() {
       _isLoading = true;
     });
@@ -225,7 +225,7 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _loadShoppingList,
+              onRefresh: loadShoppingList,
               child: FadeTransition(
                 opacity: _fadeInAnimation,
                 child: items.isEmpty
@@ -242,13 +242,13 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
   }
 
   Widget _buildShoppingList(List<ShoppingItem> items) {
-    final notCompletedItems = items.where((item) => !item.isCompleted).toList();
-    final completedItems = items.where((item) => item.isCompleted).toList();
+    final notPurchasedItems = items.where((item) => !item.isPurchased).toList();
+    final purchasedItems = items.where((item) => item.isPurchased).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        if (notCompletedItems.isNotEmpty) ...[  
+        if (notPurchasedItems.isNotEmpty) ...[  
           Text(
             'Items to Buy',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -257,11 +257,11 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
                 ),
           ),
           const SizedBox(height: 8),
-          ...notCompletedItems.map((item) => _buildShoppingItemCard(item, false)),
+          ...notPurchasedItems.map((item) => _buildShoppingItemCard(item, false)),
           const SizedBox(height: 24),
         ],
         
-        if (completedItems.isNotEmpty) ...[  
+        if (purchasedItems.isNotEmpty) ...[  
           Text(
             'Completed Items',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -270,13 +270,13 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
                 ),
           ),
           const SizedBox(height: 8),
-          ...completedItems.map((item) => _buildShoppingItemCard(item, true)),
+          ...purchasedItems.map((item) => _buildShoppingItemCard(item, true)),
         ],
       ],
     );
   }
 
-  Widget _buildShoppingItemCard(ShoppingItem item, bool isCompleted) {
+  Widget _buildShoppingItemCard(ShoppingItem item, bool isPurchased) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final shoppingListProvider = Provider.of<ShoppingListProvider>(context, listen: false);
     final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
@@ -284,7 +284,7 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Dismissible(
-        key: Key(item.id),
+        key: ValueKey(item.id ?? UniqueKey()),
         background: Container(
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 20.0),
@@ -300,10 +300,9 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
         direction: DismissDirection.endToStart,
         onDismissed: (direction) async {
           if (authProvider.currentFamily != null) {
-            await shoppingListProvider.deleteItem(
-              item.id,
-              authProvider.currentFamily!.id,
-            );
+            if (item.id != null) {
+              await shoppingListProvider.deleteItem(item.id, authProvider.currentFamily!.id);
+            }
           }
         },
         child: AnimatedContainer(
@@ -312,7 +311,7 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
             color: Theme.of(context).cardTheme.color,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isCompleted
+              color: isPurchased
                   ? Colors.transparent
                   : Theme.of(context).dividerTheme.color!.withOpacity(0.5),
               width: 1,
@@ -328,7 +327,7 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: Checkbox(
-              value: item.isCompleted,
+              value: item.isPurchased,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
               activeColor: AppTheme.primaryColor,
               onChanged: (bool? value) async {
@@ -361,9 +360,9 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
               item.name,
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: isCompleted ? FontWeight.normal : FontWeight.bold,
-                decoration: isCompleted ? TextDecoration.lineThrough : null,
-                color: isCompleted
+                fontWeight: isPurchased ? FontWeight.normal : FontWeight.bold,
+                decoration: isPurchased ? TextDecoration.lineThrough : null,
+                color: isPurchased
                     ? Theme.of(context).textTheme.bodyMedium!.color!.withOpacity(0.6)
                     : Theme.of(context).textTheme.bodyLarge!.color,
               ),
@@ -371,7 +370,7 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: isCompleted
+                color: isPurchased
                     ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
                     : Theme.of(context).colorScheme.primary.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(16),
@@ -381,7 +380,7 @@ class ShoppingListTabState extends State<ShoppingListTab> with SingleTickerProvi
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: isCompleted
+                  color: isPurchased
                       ? Theme.of(context).colorScheme.primary.withOpacity(0.7)
                       : Theme.of(context).colorScheme.primary,
                 ),

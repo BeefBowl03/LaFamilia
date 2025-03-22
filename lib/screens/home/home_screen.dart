@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../theme/app_theme.dart';
 import '../notifications/notification_screen.dart';
 import '../tasks/create_task_screen.dart';
+import '../auth/login_screen.dart';
+import '../family/add_family_member_screen.dart';
 import 'tabs/tasks_tab.dart';
 import 'tabs/shopping_list_tab.dart';
 import 'tabs/family_tab.dart';
 import 'tabs/settings_tab.dart';
+import '../shopping/create_shopping_item_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,7 +24,6 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
-  final _tasksTabKey = GlobalKey<TasksTabState>();
   
   final List<Widget> _tabs = [
     TasksTab(key: GlobalKey<TasksTabState>()),
@@ -93,9 +96,37 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
     
     return Scaffold(
       appBar: AppBar(
-        title: Text(_tabTitles[_currentIndex]),
+        title: Text(_getTitle()),
         elevation: 0,
         actions: [
+          // Show logout button
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              final shouldLogout = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Logout'),
+                  content: const Text('Are you sure you want to logout?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Logout'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (shouldLogout == true && mounted) {
+                Provider.of<AuthProvider>(context, listen: false).logout();
+                // Navigation will be handled by the Consumer in main.dart
+              }
+            },
+          ),
           if (_currentIndex == 0) // Show notification icon only on Tasks tab
             Stack(
               children: [
@@ -141,23 +172,7 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
         opacity: _fadeTransition,
         child: _tabs[_currentIndex],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreateTaskScreen()),
-          ).then((_) {
-            // Refresh tasks after creating a new one
-            final tasksTab = _tabs[0] as TasksTab;
-            final state = tasksTab.key as GlobalKey<TasksTabState>;
-            if (state.currentState != null) {
-              state.currentState!.loadTasks();
-            }
-          });
-        },
-        backgroundColor: AppTheme.primaryColor,
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _buildFAB(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -201,5 +216,99 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
         ),
       ),
     );
+  }
+
+  Widget? _buildFAB(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    
+    // Enhanced debug prints
+    print('Building FAB:');
+    print('Current Index: $_currentIndex');
+    print('Is Parent: ${authProvider.isParent}');
+    print('Current User: ${authProvider.currentUser}');
+    print('User Role: ${authProvider.currentUser?.role}');
+    
+    // Only show FAB for parent users
+    if (!authProvider.isParent) {
+        print('FAB not shown: User is not a parent');
+        print('Current User Details: ${authProvider.currentUser?.toString()}');
+        return null;
+    }
+
+    switch (_currentIndex) {
+      case 0: // Tasks tab
+        print('Showing Tasks FAB');
+        return FloatingActionButton(
+          onPressed: () {
+            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CreateTaskScreen(
+                  isParent: authProvider.currentUser?.role == UserRole.parent,
+                ),
+              ),
+            ).then((_) {
+              // Refresh tasks after creating a new one
+              if (_tabs[0] is TasksTab) {
+                final tasksTab = _tabs[0] as TasksTab;
+                final state = (tasksTab.key as GlobalKey<TasksTabState>).currentState;
+                if (state != null) {
+                  state.loadTasks();
+                }
+              }
+            });
+          },
+          backgroundColor: AppTheme.primaryColor,
+          child: const Icon(Icons.add),
+          tooltip: 'Add Task',
+        );
+        
+      case 1: // Shopping tab
+        // Only show shopping FAB for parents
+        return FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CreateShoppingItemScreen()),
+            );
+          },
+          backgroundColor: AppTheme.primaryColor,
+          child: const Icon(Icons.add_shopping_cart),
+          tooltip: 'Add Shopping Item',
+        );
+        
+      case 2: // Family tab
+        // Only show family member FAB for parents
+        return FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AddFamilyMemberScreen()),
+            );
+          },
+          backgroundColor: AppTheme.primaryColor,
+          child: const Icon(Icons.person_add),
+          tooltip: 'Add Family Member',
+        );
+        
+      default:
+        return null;
+    }
+  }
+
+  String _getTitle() {
+    switch (_currentIndex) {
+      case 0:
+        return 'Tasks';
+      case 1:
+        return 'Shopping List';
+      case 2:
+        return 'Family';
+      case 3:
+        return 'Settings';
+      default:
+        return 'Family Task Management';
+    }
   }
 }

@@ -11,7 +11,12 @@ import '../../providers/notification_provider.dart';
 import '../../theme/app_theme.dart';
 
 class CreateTaskScreen extends StatefulWidget {
-  const CreateTaskScreen({super.key});
+  final bool isParent;
+
+  const CreateTaskScreen({
+    super.key,
+    required this.isParent,
+  });
 
   @override
   CreateTaskScreenState createState() => CreateTaskScreenState();
@@ -151,54 +156,38 @@ class CreateTaskScreenState extends State<CreateTaskScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final familyMembers = authProvider.familyMembers;
-
+    
+    // Add these debug prints
+    print('Current user role: ${authProvider.currentUser?.role}');
+    print('Is parent from widget: ${widget.isParent}');
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Task'),
-        actions: [
-          if (_isLoading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.check),
-              onPressed: _createTask,
-            ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title
+              // Title field - available to all
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
-                  labelText: 'Title',
+                  labelText: 'Task Title',
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
+                    return 'Please enter a task title';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 16),
-
-              // Description
+              
+              // Description field - available to all
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
@@ -208,96 +197,27 @@ class CreateTaskScreenState extends State<CreateTaskScreen> {
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
-
-              // Due Date & Time
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _selectDate,
-                      icon: const Icon(Icons.calendar_today),
-                      label: Text(
-                        '${_dueDate.month}/${_dueDate.day}/${_dueDate.year}',
-                      ),
-                    ),
+              
+              // Due date - available to all
+              InkWell(
+                onTap: () => _selectDate(),
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Due Date',
+                    border: OutlineInputBorder(),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _selectTime,
-                      icon: const Icon(Icons.access_time),
-                      label: Text(_dueTime.format(context)),
-                    ),
+                  child: Text(
+                    _dueDate != null
+                        ? DateFormat('MMM d, yyyy').format(_dueDate!)
+                        : 'Select Due Date',
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Category
-              DropdownButtonFormField<TaskCategory>(
-                value: _category,
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                  border: OutlineInputBorder(),
                 ),
-                items: TaskCategory.values.map((category) {
-                  return DropdownMenuItem(
-                    value: category,
-                    child: Text(category.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _category = value);
-                  }
-                },
               ),
               const SizedBox(height: 16),
-
-              // Priority
-              DropdownButtonFormField<TaskPriority>(
-                value: _priority,
-                decoration: const InputDecoration(
-                  labelText: 'Priority',
-                  border: OutlineInputBorder(),
-                ),
-                items: TaskPriority.values.map((priority) {
-                  return DropdownMenuItem(
-                    value: priority,
-                    child: Text(priority.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _priority = value);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Recurrence
-              DropdownButtonFormField<TaskRecurrence>(
-                value: _recurrence,
-                decoration: const InputDecoration(
-                  labelText: 'Recurrence',
-                  border: OutlineInputBorder(),
-                ),
-                items: TaskRecurrence.values.map((recurrence) {
-                  return DropdownMenuItem(
-                    value: recurrence,
-                    child: Text(recurrence.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _recurrence = value);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Assign To
-              if (familyMembers.isNotEmpty)
+              
+              // Parent-only fields
+              if (widget.isParent) ...[
+                // Assigned to field
                 DropdownButtonFormField<String>(
                   value: _assignedToUserId ?? authProvider.currentUser!.id,
                   decoration: const InputDecoration(
@@ -305,19 +225,62 @@ class CreateTaskScreenState extends State<CreateTaskScreen> {
                     border: OutlineInputBorder(),
                   ),
                   items: [
-                    ...familyMembers.map((member) {
-                      return DropdownMenuItem(
-                        value: member.id,
-                        child: Text(member.name),
-                      );
-                    }),
+                    ..._familyMembers.map((member) => DropdownMenuItem(
+                      value: member.id,
+                      child: Text(member.name),
+                    )),
                   ],
+                  onChanged: (value) => setState(() => _assignedToUserId = value),
+                ),
+                const SizedBox(height: 16),
+                
+                // Category field
+                DropdownButtonFormField<TaskCategory>(
+                  value: _category,
+                  decoration: const InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: TaskCategory.values.map((category) => DropdownMenuItem(
+                    value: category,
+                    child: Text(category.toString().split('.').last),
+                  )).toList(),
                   onChanged: (value) {
                     if (value != null) {
-                      setState(() => _assignedToUserId = value);
+                      setState(() => _category = value);
                     }
                   },
                 ),
+                const SizedBox(height: 16),
+                
+                // Recurrence field
+                DropdownButtonFormField<TaskRecurrence>(
+                  value: _recurrence,
+                  decoration: const InputDecoration(
+                    labelText: 'Recurrence',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: TaskRecurrence.values.map((recurrence) => DropdownMenuItem(
+                    value: recurrence,
+                    child: Text(recurrence.toString().split('.').last),
+                  )).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _recurrence = value);
+                    }
+                  },
+                ),
+              ],
+              
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _createTask,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+                child: const Text('Create Task'),
+              ),
             ],
           ),
         ),

@@ -73,7 +73,7 @@ class _SettingsTabState extends State<SettingsTab> with SingleTickerProviderStat
 
     if (confirm == true) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.logout();
+      authProvider.logout();
       
       if (mounted) {
         // Navigate to welcome screen and clear all previous routes

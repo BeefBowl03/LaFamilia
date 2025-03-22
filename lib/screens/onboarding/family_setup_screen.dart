@@ -50,9 +50,8 @@ class FamilySetupScreenState extends State<FamilySetupScreen> {
       for (final member in _familyMembers) {
         await authProvider.addFamilyMember(
           member['name'],
-          member['age'],
-          member['isParent'],
-          authProvider.currentFamily!.id,
+          int.parse(member['age']),
+          member['isParent'] ? UserRole.parent : UserRole.child,
         );
       }
 

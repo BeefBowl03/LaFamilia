@@ -5,7 +5,11 @@ import '../models/notification_model.dart';
 import '../services/data_service.dart';
 
 class NotificationProvider extends ChangeNotifier {
-  final DataService _dataService = DataService();
+  late DataService _dataService;
+
+  void setDataService(DataService dataService) {
+    _dataService = dataService;
+  }
 
   List<NotificationModel> _notifications = [];
   List<NotificationModel> get notifications => _notifications;

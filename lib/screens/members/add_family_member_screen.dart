@@ -15,12 +15,14 @@ class AddFamilyMemberScreen extends StatefulWidget {
 class AddFamilyMemberScreenState extends State<AddFamilyMemberScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _ageController = TextEditingController();
   UserRole _selectedRole = UserRole.child;
   bool _isAdding = false;
 
   @override
   void dispose() {
     _nameController.dispose();
+    _ageController.dispose();
     super.dispose();
   }
 
@@ -34,16 +36,15 @@ class AddFamilyMemberScreenState extends State<AddFamilyMemberScreen> {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.addFamilyMember(
-        _nameController.text.trim(),
-        18, // Default age or add an age field to your form
-        _selectedRole == UserRole.parent,
-        authProvider.currentFamily!.id,
+        _nameController.text,
+        int.parse(_ageController.text),
+        _selectedRole,
       );
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_nameController.text.trim()} added to family')),
+          SnackBar(content: Text('${_nameController.text} added to family')),
         );
       }
     } catch (e) {
@@ -110,6 +111,34 @@ class AddFamilyMemberScreenState extends State<AddFamilyMemberScreen> {
                   return null;
                 },
                 textCapitalization: TextCapitalization.words,
+              ),
+              const SizedBox(height: 24),
+              
+              // Age input
+              TextFormField(
+                controller: _ageController,
+                decoration: const InputDecoration(
+                  labelText: 'Age',
+                  prefixIcon: Icon(Icons.calendar_month),
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter an age';
+                  }
+                  final age = int.tryParse(value);
+                  if (age == null) {
+                    return 'Please enter a valid number';
+                  }
+                  if (age < 0 || age > 120) {
+                    return 'Please enter a valid age between 0 and 120';
+                  }
+                  if (_selectedRole == UserRole.parent && age < 18) {
+                    return 'Parents must be at least 18 years old';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 24),
               
