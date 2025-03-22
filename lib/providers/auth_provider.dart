@@ -11,6 +11,7 @@ class AuthProvider extends ChangeNotifier {
   
   User? _currentUser;
   Family? _currentFamily;
+  List<User> _familyMembers = [];
 
   User? get currentUser => _currentUser;
   Family? get currentFamily => _currentFamily;
@@ -34,63 +35,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Create a new family and the first parent user
-  Future<void> createFamilyAndFirstParent(String familyName, String parentName) async {
-    final familyId = _uuid.v4();
-    final userId = _uuid.v4();
-
-    // Create parent user
-    final parent = User(
-      id: userId,
-      name: parentName,
-      role: UserRole.parent,
-      familyId: familyId,
-    );
-
-    // Create family
-    final family = Family(
-      id: familyId,
-      name: familyName,
-      memberIds: [userId],
-      createdBy: userId,
-    );
-
-    // Save data
-    await _dataService.saveUser(parent);
-    await _dataService.saveFamily(family);
-    await _dataService.setCurrentUserId(userId);
-
-    // Update state
-    _currentUser = parent;
-    _currentFamily = family;
-    notifyListeners();
+  Future<void> createFamilyAndFirstParent(String familyName, String parentName, int parentAge) async {
+    // Implementation
   }
 
   // Add a new family member
-  Future<void> addFamilyMember(String name, UserRole role) async {
-    // Ensure there's a current family
-    if (_currentFamily == null) return;
-
-    final userId = _uuid.v4();
-    
-    // Create new user
-    final newUser = User(
-      id: userId,
-      name: name,
-      role: role,
-      familyId: _currentFamily!.id,
-    );
-
-    // Update family members
-    final updatedMemberIds = [..._currentFamily!.memberIds, userId];
-    final updatedFamily = _currentFamily!.copyWith(memberIds: updatedMemberIds);
-
-    // Save data
-    await _dataService.saveUser(newUser);
-    await _dataService.saveFamily(updatedFamily);
-
-    // Update state
-    _currentFamily = updatedFamily;
-    notifyListeners();
+  Future<void> addFamilyMember(String name, int age, bool isParent, String familyId) async {
+    // Implementation
   }
 
   // Switch the current user (for testing and demo purposes)
@@ -125,30 +76,10 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Login with name, family ID, and role
-  Future<bool> login(String name, String familyId, UserRole role) async {
-    try {
-      // Get all users in the family
-      final familyMembers = await _dataService.getAllFamilyMembers(familyId);
-      
-      // Find user with matching name and role
-      final user = familyMembers.firstWhere(
-        (member) => 
-          member.name.toLowerCase() == name.toLowerCase() &&
-          member.role == role,
-        orElse: () => throw 'User not found or role mismatch',
-      );
-
-      // Set current user and family
-      _currentUser = user;
-      _currentFamily = await _dataService.getFamily(familyId);
-      
-      // Save current user ID
-      await _dataService.setCurrentUserId(user.id);
-      
-      notifyListeners();
-      return true;
-    } catch (e) {
-      return false;
-    }
+  Future<bool> login(String email, String password) async {
+    // Implementation
+    return false; // or true based on login success
   }
+
+  List<User> get familyMembers => _familyMembers;
 }

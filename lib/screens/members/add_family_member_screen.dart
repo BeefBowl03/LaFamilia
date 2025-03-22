@@ -35,7 +35,9 @@ class AddFamilyMemberScreenState extends State<AddFamilyMemberScreen> {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.addFamilyMember(
         _nameController.text.trim(),
-        _selectedRole,
+        18, // Default age or add an age field to your form
+        _selectedRole == UserRole.parent,
+        authProvider.currentFamily!.id,
       );
 
       if (mounted) {

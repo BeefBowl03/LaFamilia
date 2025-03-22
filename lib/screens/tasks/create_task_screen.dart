@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../models/user_model.dart';
 import '../../models/task_model.dart';
@@ -91,19 +92,21 @@ class CreateTaskScreenState extends State<CreateTaskScreen> {
       );
 
       final task = Task(
-        id: '', // Will be set by the provider
-        familyId: authProvider.currentFamily!.id,
+        id: const Uuid().v4(),
         title: _titleController.text,
         description: _descriptionController.text,
-        category: _category,
-        priority: _priority,
         dueDate: dueDateTime,
-        recurrence: _recurrence,
-        createdByUserId: authProvider.currentUser!.id,
+        assignedToId: _assignedToUserId ?? authProvider.currentUser!.id,
+        assignedByParentId: authProvider.currentUser!.id,
         assignedToUserId: _assignedToUserId ?? authProvider.currentUser!.id,
-        isCompleted: false,
+        familyId: authProvider.currentFamily!.id,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        isCompleted: false,
+        priority: _priority,
+        category: _category,
+        recurrence: _recurrence,
+        createdBy: authProvider.currentUser!.id,
       );
 
       await taskProvider.createTask(task);

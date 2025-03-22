@@ -25,7 +25,7 @@ class TasksTabState extends State<TasksTab> with SingleTickerProviderStateMixin 
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _loadTasks();
+    loadTasks();
   }
 
   @override
@@ -34,7 +34,7 @@ class TasksTabState extends State<TasksTab> with SingleTickerProviderStateMixin 
     super.dispose();
   }
 
-  Future<void> _loadTasks() async {
+  Future<void> loadTasks() async {
     setState(() {
       _isLoading = true;
     });
@@ -70,73 +70,53 @@ class TasksTabState extends State<TasksTab> with SingleTickerProviderStateMixin 
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final taskProvider = Provider.of<TaskProvider>(context);
-    final isParent = authProvider.isParent;
 
-    return Scaffold(
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadTasks,
-              child: Column(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.05),
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(16),
-                        bottomRight: Radius.circular(16),
-                      ),
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      labelColor: AppTheme.primaryColor,
-                      unselectedLabelColor: Theme.of(context).textTheme.bodyMedium!.color!.withOpacity(0.7),
-                      indicatorSize: TabBarIndicatorSize.label,
-                      indicator: UnderlineTabIndicator(
-                        borderSide: BorderSide(width: 3.0, color: AppTheme.primaryColor),
-                        insets: const EdgeInsets.symmetric(horizontal: 16.0),
-                      ),
-                      tabs: const [
-                        Tab(text: 'Today'),
-                        Tab(text: 'Upcoming'),
-                        Tab(text: 'Completed'),
-                      ],
+    return _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            onRefresh: loadTasks,
+            child: Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.05),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(16),
+                      bottomRight: Radius.circular(16),
                     ),
                   ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        // Today Tab
-                        _buildTaskList(
-                          taskProvider.getTasksDueToday()..addAll(taskProvider.getOverdueTasks()),
-                          'today',
-                        ),
-                        
-                        // Upcoming Tab
-                        _buildTaskList(taskProvider.getUpcomingTasks(), 'upcoming'),
-                        
-                        // Completed Tab
-                        _buildTaskList(taskProvider.getTasksByCompletion(true), 'completed'),
-                      ],
+                  child: TabBar(
+                    controller: _tabController,
+                    labelColor: AppTheme.primaryColor,
+                    unselectedLabelColor: Theme.of(context).textTheme.bodyMedium!.color!.withOpacity(0.7),
+                    indicatorSize: TabBarIndicatorSize.label,
+                    indicator: UnderlineTabIndicator(
+                      borderSide: BorderSide(width: 3.0, color: AppTheme.primaryColor),
+                      insets: const EdgeInsets.symmetric(horizontal: 16.0),
                     ),
+                    tabs: const [
+                      Tab(text: 'Today'),
+                      Tab(text: 'Upcoming'),
+                      Tab(text: 'Completed'),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildTaskList(
+                        taskProvider.getTasksDueToday()..addAll(taskProvider.getOverdueTasks()),
+                        'today',
+                      ),
+                      _buildTaskList(taskProvider.getUpcomingTasks(), 'upcoming'),
+                      _buildTaskList(taskProvider.getTasksByCompletion(true), 'completed'),
+                    ],
+                  ),
+                ),
+              ],
             ),
-      floatingActionButton: isParent
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CreateTaskScreen()),
-                ).then((_) => _loadTasks());
-              },
-              backgroundColor: AppTheme.primaryColor,
-              child: const Icon(Icons.add),
-            )
-          : null,
-    );
+          );
   }
 
   Widget _buildTaskList(List<Task> tasks, String listType) {
@@ -208,7 +188,7 @@ class TasksTabState extends State<TasksTab> with SingleTickerProviderStateMixin 
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => TaskDetailScreen(task: task)),
-            ).then((_) => _loadTasks());
+            ).then((_) => loadTasks());
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -281,7 +261,7 @@ class TasksTabState extends State<TasksTab> with SingleTickerProviderStateMixin 
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Text(
-                              task.category,
+                              task.category.toString(),
                               style: TextStyle(
                                 color: Theme.of(context).primaryColor,
                                 fontSize: 10,

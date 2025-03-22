@@ -85,20 +85,28 @@ class DataService {
       id: taskId,
       title: task.title,
       description: task.description,
-      assignedTo: task.assignedTo,
-      createdBy: task.createdBy,
       dueDate: task.dueDate,
-      isCompleted: task.isCompleted,
+      assignedToId: task.assignedToId,
+      assignedByParentId: task.assignedByParentId,
       category: task.category,
       priority: task.priority,
+      isCompleted: task.isCompleted,
+      createdAt: task.createdAt,
+      completedAt: task.completedAt,
+      orderIndex: task.orderIndex,
+      assignedToUserId: task.assignedToUserId,
+      familyId: task.familyId,
+      createdBy: task.createdBy,
+      updatedAt: DateTime.now(),
+      recurrence: task.recurrence,
     );
 
     // Get all tasks for the family
-    final allTasks = await getTasks(task.assignedTo);
+    final allTasks = await getTasks(task.assignedToUserId);
     allTasks.add(newTask);
 
     // Save all tasks
-    await saveTasks(task.assignedTo, allTasks);
+    await saveTasks(task.assignedToUserId, allTasks);
     return taskId;
   }
 
@@ -116,19 +124,19 @@ class DataService {
   }
 
   Future<void> updateTask(Task task) async {
-    final tasks = await getTasks(task.assignedTo);
+    final tasks = await getTasks(task.assignedToUserId);
     final index = tasks.indexWhere((t) => t.id == task.id);
     
     if (index >= 0) {
       tasks[index] = task;
-      await saveTasks(task.assignedTo, tasks);
+      await saveTasks(task.assignedToUserId, tasks);
     }
   }
 
   Future<void> deleteTask(Task task) async {
-    final tasks = await getTasks(task.assignedTo);
+    final tasks = await getTasks(task.assignedToUserId);
     tasks.removeWhere((t) => t.id == task.id);
-    await saveTasks(task.assignedTo, tasks);
+    await saveTasks(task.assignedToUserId, tasks);
   }
 
   // Shopping List Methods

@@ -6,20 +6,19 @@ class AddFamilyMemberDialog extends StatefulWidget {
   final Function(String name, int age, UserRole role, List<String> responsibilities) onAdd;
 
   const AddFamilyMemberDialog({
-    super.key,
+    Key? key,
     required this.onAdd,
-  });
+  }) : super(key: key);
 
   @override
   AddFamilyMemberDialogState createState() => AddFamilyMemberDialogState();
 }
 
 class AddFamilyMemberDialogState extends State<AddFamilyMemberDialog> {
-  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
   UserRole _selectedRole = UserRole.child;
-  final List<String> _responsibilities = [];
+  final List<String> _selectedResponsibilities = [];
 
   final List<String> _commonResponsibilities = [
     'Clean Room',
@@ -39,120 +38,83 @@ class AddFamilyMemberDialogState extends State<AddFamilyMemberDialog> {
     super.dispose();
   }
 
-  void _addMember() {
-    if (_formKey.currentState!.validate()) {
-      widget.onAdd(
-        _nameController.text,
-        int.parse(_ageController.text),
-        _selectedRole,
-        _responsibilities,
-      );
-      Navigator.of(context).pop();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Add Family Member'),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  hintText: 'Enter name',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a name';
-                  }
-                  return null;
-                },
-              ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            TextField(
+              controller: _ageController,
+              decoration: const InputDecoration(labelText: 'Age'),
+              keyboardType: TextInputType.number,
+            ),
+            DropdownButton<UserRole>(
+              value: _selectedRole,
+              items: UserRole.values.map((role) {
+                return DropdownMenuItem(
+                  value: role,
+                  child: Text(role.toString().split('.').last),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _selectedRole = value);
+                }
+              },
+            ),
+            if (_selectedRole == UserRole.child) ...[
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _ageController,
-                decoration: const InputDecoration(
-                  labelText: 'Age',
-                  hintText: 'Enter age',
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter age';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Please enter a valid age';
-                  }
-                  return null;
-                },
+              const Text(
+                'Select Responsibilities:',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<UserRole>(
-                value: _selectedRole,
-                decoration: const InputDecoration(
-                  labelText: 'Role',
-                  border: OutlineInputBorder(),
-                ),
-                items: UserRole.values.map((role) {
-                  return DropdownMenuItem(
-                    value: role,
-                    child: Text(role == UserRole.parent ? 'Parent' : 'Child'),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: _commonResponsibilities.map((responsibility) {
+                  final isSelected = _selectedResponsibilities.contains(responsibility);
+                  return FilterChip(
+                    label: Text(responsibility),
+                    selected: isSelected,
+                    onSelected: (bool selected) {
+                      setState(() {
+                        if (selected) {
+                          _selectedResponsibilities.add(responsibility);
+                        } else {
+                          _selectedResponsibilities.remove(responsibility);
+                        }
+                      });
+                    },
+                    selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                    checkmarkColor: AppTheme.primaryColor,
                   );
                 }).toList(),
-                onChanged: (UserRole? value) {
-                  if (value != null) {
-                    setState(() {
-                      _selectedRole = value;
-                    });
-                  }
-                },
               ),
-              if (_selectedRole == UserRole.child) ...[
-                const SizedBox(height: 16),
-                const Text(
-                  'Select Responsibilities:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: _commonResponsibilities.map((responsibility) {
-                    final isSelected = _responsibilities.contains(responsibility);
-                    return FilterChip(
-                      label: Text(responsibility),
-                      selected: isSelected,
-                      onSelected: (bool selected) {
-                        setState(() {
-                          if (selected) {
-                            _responsibilities.add(responsibility);
-                          } else {
-                            _responsibilities.remove(responsibility);
-                          }
-                        });
-                      },
-                      selectedColor: AppTheme.primaryColor.withOpacity(0.2),
-                      checkmarkColor: AppTheme.primaryColor,
-                    );
-                  }).toList(),
-                ),
-              ],
             ],
-          ),
+          ],
         ),
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        ElevatedButton(
-          onPressed: _addMember,
+        TextButton(
+          onPressed: () {
+            final name = _nameController.text;
+            final age = int.tryParse(_ageController.text) ?? 0;
+            if (name.isNotEmpty && age > 0) {
+              widget.onAdd(name, age, _selectedRole, _selectedResponsibilities);
+              Navigator.pop(context);
+            }
+          },
           child: const Text('Add'),
         ),
       ],

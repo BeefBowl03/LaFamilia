@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../theme/app_theme.dart';
 import '../notifications/notification_screen.dart';
+import '../tasks/create_task_screen.dart';
 import 'tabs/tasks_tab.dart';
 import 'tabs/shopping_list_tab.dart';
 import 'tabs/family_tab.dart';
@@ -19,8 +20,10 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
+  final _tasksTabKey = GlobalKey<TasksTabState>();
+  
   final List<Widget> _tabs = [
-    const TasksTab(),
+    TasksTab(key: GlobalKey<TasksTabState>()),
     const ShoppingListTab(), 
     const FamilyTab(),
     const SettingsTab(),
@@ -82,57 +85,80 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
   Widget build(BuildContext context) {
     final notificationProvider = Provider.of<NotificationProvider>(context);
     final unreadCount = notificationProvider.unreadCount;
-
+    final authProvider = Provider.of<AuthProvider>(context);
+    
+    // Add debug print to check conditions
+    print('Current Index: $_currentIndex');
+    print('Is Parent: ${authProvider.isParent}');
+    
     return Scaffold(
       appBar: AppBar(
         title: Text(_tabTitles[_currentIndex]),
         elevation: 0,
         actions: [
-          // Notification bell icon with badge for unread notifications
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const NotificationScreen()),
-                  );
-                },
-              ),
-              if (unreadCount > 0)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accentColor,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 18,
-                      minHeight: 18,
-                    ),
-                    child: Text(
-                      unreadCount > 9 ? '9+' : '$unreadCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+          if (_currentIndex == 0) // Show notification icon only on Tasks tab
+            Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                    );
+                  },
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.accentColor,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      textAlign: TextAlign.center,
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        unreadCount > 9 ? '9+' : '$unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
-                ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
       body: FadeTransition(
         opacity: _fadeTransition,
         child: _tabs[_currentIndex],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreateTaskScreen()),
+          ).then((_) {
+            // Refresh tasks after creating a new one
+            final tasksTab = _tabs[0] as TasksTab;
+            final state = tasksTab.key as GlobalKey<TasksTabState>;
+            if (state.currentState != null) {
+              state.currentState!.loadTasks();
+            }
+          });
+        },
+        backgroundColor: AppTheme.primaryColor,
+        child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [

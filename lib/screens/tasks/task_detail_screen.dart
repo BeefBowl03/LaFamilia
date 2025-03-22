@@ -226,7 +226,7 @@ class TaskDetailScreenState extends State<TaskDetailScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      _task.category,
+                      _task.category.toString(),
                       style: TextStyle(
                         color: Theme.of(context).primaryColor,
                         fontWeight: FontWeight.bold,
@@ -280,10 +280,12 @@ class TaskDetailScreenState extends State<TaskDetailScreen> {
                       ),
                     ),
                     child: Text(
-                      _task.description.isNotEmpty ? _task.description : 'No description provided.',
+                      _task.description?.isNotEmpty == true 
+                          ? _task.description! 
+                          : 'No description provided.',
                       style: TextStyle(
                         fontSize: 16,
-                        color: _task.description.isEmpty
+                        color: _task.description?.isEmpty == true
                             ? Theme.of(context).textTheme.bodyMedium!.color!.withOpacity(0.5)
                             : Theme.of(context).textTheme.bodyLarge!.color,
                       ),

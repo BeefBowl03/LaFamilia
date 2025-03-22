@@ -86,7 +86,7 @@ class FamilyTaskAppState extends State<FamilyTaskApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Family Task Manager',
+      title: 'Family Task Management',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
@@ -95,6 +95,10 @@ class FamilyTaskAppState extends State<FamilyTaskApp> {
               ? const HomeScreen()
               : const WelcomeScreen()
           : const SplashScreen(),
+      routes: {
+        '/home': (context) => const HomeScreen(),
+        '/welcome': (context) => const WelcomeScreen(),
+      },
     );
   }
 }

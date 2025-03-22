@@ -6,7 +6,9 @@ enum UserRole { parent, child }
 class User {
   final String id;
   final String name;
+  final String email;
   final int age;
+  final bool isParent;
   final UserRole role;
   final String familyId;
   final List<String> responsibilities;
@@ -16,7 +18,9 @@ class User {
   User({
     required this.id,
     required this.name,
+    required this.email,
     required this.age,
+    required this.isParent,
     required this.role,
     required this.familyId,
     this.responsibilities = const [],
@@ -27,7 +31,9 @@ class User {
   User copyWith({
     String? id,
     String? name,
+    String? email,
     int? age,
+    bool? isParent,
     UserRole? role,
     String? familyId,
     List<String>? responsibilities,
@@ -37,7 +43,9 @@ class User {
     return User(
       id: id ?? this.id,
       name: name ?? this.name,
+      email: email ?? this.email,
       age: age ?? this.age,
+      isParent: isParent ?? this.isParent,
       role: role ?? this.role,
       familyId: familyId ?? this.familyId,
       responsibilities: responsibilities ?? this.responsibilities,
@@ -50,7 +58,9 @@ class User {
     return {
       'id': id,
       'name': name,
+      'email': email,
       'age': age,
+      'isParent': isParent,
       'role': role.toString(),
       'familyId': familyId,
       'responsibilities': responsibilities,
@@ -63,7 +73,9 @@ class User {
     return User(
       id: json['id'] as String,
       name: json['name'] as String,
+      email: json['email'] as String,
       age: json['age'] as int,
+      isParent: json['isParent'] as bool,
       role: UserRole.values.firstWhere(
         (role) => role.toString() == json['role'],
         orElse: () => UserRole.child,

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../models/user_model.dart';
+import '../onboarding/add_family_member_dialog.dart';
 
 class FamilySetupScreen extends StatefulWidget {
   const FamilySetupScreen({super.key});
@@ -50,14 +51,18 @@ class FamilySetupScreenState extends State<FamilySetupScreen> {
         await authProvider.addFamilyMember(
           member['name'],
           member['age'],
-          member['role'],
-          member['responsibilities'] ?? [],
+          member['isParent'],
+          authProvider.currentFamily!.id,
         );
       }
 
       if (mounted) {
-        // Navigate to home screen
-        Navigator.of(context).pushReplacementNamed('/home');
+        // Navigate to home screen and remove all previous routes
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/home',
+          (route) => false,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -81,7 +86,7 @@ class FamilySetupScreenState extends State<FamilySetupScreen> {
             _familyMembers.add({
               'name': name,
               'age': age,
-              'role': role,
+              'isParent': role == UserRole.parent,
               'responsibilities': responsibilities,
             });
           });
@@ -175,7 +180,7 @@ class FamilySetupScreenState extends State<FamilySetupScreen> {
                 children: [
                   ..._familyMembers.map((member) => ListTile(
                     title: Text(member['name']),
-                    subtitle: Text('${member['age']} years old - ${member['role'] == UserRole.parent ? 'Parent' : 'Child'}'),
+                    subtitle: Text('${member['age']} years old - ${member['isParent'] ? 'Parent' : 'Child'}'),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete),
                       onPressed: () {

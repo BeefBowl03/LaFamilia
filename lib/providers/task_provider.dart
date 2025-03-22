@@ -136,10 +136,10 @@ class TaskProvider with ChangeNotifier {
     }
   }
 
-  Future<void> deleteTask(String taskId) async {
+  Future<void> deleteTask(Task task) async {
     try {
-      await _db.deleteTask(taskId);
-      _tasks.removeWhere((task) => task.id == taskId);
+      await _db.deleteTask(task.id);
+      _tasks.removeWhere((t) => t.id == task.id);
       notifyListeners();
     } catch (e) {
       print('Error deleting task: $e');
@@ -147,12 +147,11 @@ class TaskProvider with ChangeNotifier {
     }
   }
 
-  Future<void> toggleTaskCompletion(String taskId) async {
+  Future<void> toggleTaskCompletion(Task task) async {
     try {
-      final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
+      final taskIndex = _tasks.indexWhere((t) => t.id == task.id);
       if (taskIndex == -1) return;
 
-      final task = _tasks[taskIndex];
       final updatedTask = task.copyWith(
         isCompleted: !task.isCompleted,
         updatedAt: DateTime.now(),

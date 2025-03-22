@@ -34,6 +34,10 @@ class Task {
   final DateTime createdAt;
   final DateTime? completedAt;
   final int orderIndex; // For drag and drop priority
+  final String assignedToUserId;
+  final String familyId;
+  final String createdBy;
+  final DateTime updatedAt;
 
   Task({
     required this.id,
@@ -49,6 +53,10 @@ class Task {
     DateTime? createdAt,
     this.completedAt,
     this.orderIndex = 0,
+    required this.assignedToUserId,
+    required this.familyId,
+    required this.createdBy,
+    required this.updatedAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
   Task copyWith({
@@ -65,6 +73,10 @@ class Task {
     DateTime? createdAt,
     DateTime? completedAt,
     int? orderIndex,
+    String? assignedToUserId,
+    String? familyId,
+    String? createdBy,
+    DateTime? updatedAt,
   }) {
     return Task(
       id: id ?? this.id,
@@ -80,6 +92,10 @@ class Task {
       createdAt: createdAt ?? this.createdAt,
       completedAt: completedAt ?? this.completedAt,
       orderIndex: orderIndex ?? this.orderIndex,
+      assignedToUserId: assignedToUserId ?? this.assignedToUserId,
+      familyId: familyId ?? this.familyId,
+      createdBy: createdBy ?? this.createdBy,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -98,6 +114,10 @@ class Task {
       'createdAt': createdAt.toIso8601String(),
       'completedAt': completedAt?.toIso8601String(),
       'orderIndex': orderIndex,
+      'assignedToUserId': assignedToUserId,
+      'familyId': familyId,
+      'createdBy': createdBy,
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
@@ -127,6 +147,10 @@ class Task {
         ? DateTime.parse(json['completedAt'] as String)
         : null,
       orderIndex: json['orderIndex'] as int? ?? 0,
+      assignedToUserId: json['assignedToUserId'] as String,
+      familyId: json['familyId'] as String,
+      createdBy: json['createdBy'] as String,
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
   }
 
